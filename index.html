@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daycare Opening Request – The Academy</title>
+  <style>
+    :root { --bg:#fafafa; --card:#fff; --text:#222; --muted:#666; --brand:#0d6efd; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text); background:var(--bg); }
+    .wrap { max-width:720px; margin:24px auto; padding:0 16px; }
+    h1 { margin:0 0 6px; font-size:1.5rem; }
+    p  { margin:0 0 12px; color:var(--muted); }
+    .card { background:var(--card); border:1px solid #eee; border-radius:12px; padding:16px; }
+    form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .full { grid-column:1/-1; }
+    label { display:block; font-weight:600; font-size:.9rem; margin:4px 0; }
+    input, select, textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:10px; font:inherit; background:#fff; }
+    textarea { min-height:90px; resize:vertical; }
+    .row { display:flex; align-items:center; gap:8px; }
+    .row input[type="checkbox"]{ width:auto; }
+    button { grid-column:1/-1; padding:12px; border:0; border-radius:10px; background:var(--brand); color:#fff; font-weight:700; cursor:pointer; }
+    button[disabled]{ opacity:.6; cursor:not-allowed; }
+    .status { grid-column:1/-1; padding:10px; border-radius:10px; display:none; }
+    .ok  { display:block; background:#e7f7ed; color:#0b5; }
+    .err { display:block; background:#fdeaea; color:#b00; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Daycare Opening Request</h1>
+    <p>Request to be contacted about available daycare openings at The Academy at VUMC.</p>
+
+    <div class="card">
+      <form id="reqForm" novalidate>
+        <!-- Honeypot (spam trap) -->
+        <label class="sr-only" for="hp">Leave blank</label>
+        <input id="hp" name="hp" class="sr-only" tabindex="-1" autocomplete="off" />
+
+        <div class="full"><strong>Parent/Guardian</strong></div>
+        <div><label for="pgFirst">First name *</label><input id="pgFirst" name="pgFirst" required></div>
+        <div><label for="pgLast">Last name *</label><input id="pgLast" name="pgLast" required></div>
+        <div><label for="email">Email *</label><input id="email" name="email" type="email" required></div>
+        <div><label for="phone">Mobile phone *</label><input id="phone" name="phone" type="tel" required></div>
+        <div class="full"><label for="address">Home address</label><input id="address" name="address"></div>
+
+        <div class="full"><strong>Child</strong></div>
+        <div><label for="childFirst">First name *</label><input id="childFirst" name="childFirst" required></div>
+        <div><label for="childLast">Last name *</label><input id="childLast" name="childLast" required></div>
+        <div><label for="dob">Date of birth *</label><input id="dob" name="dob" type="date" required></div>
+        <div>
+          <label for="potty">Potty trained?</label>
+          <select id="potty" name="potty">
+            <option value="">Select…</option><option>Yes</option><option>No</option><option>In progress</option>
+          </select>
+        </div>
+
+        <div class="full"><strong>Program Needs</strong></div>
+        <div><label for="startDate">Preferred start date *</label><input id="startDate" name="startDate" type="date" required></div>
+        <div>
+          <label for="schedule">Schedule needed *</label>
+          <select id="schedule" name="schedule" required>
+            <option value="">Select…</option>
+            <option>Full-time (Mon–Fri)</option>
+            <option>Part-time (3 days)</option>
+            <option>Part-time (2 days)</option>
+            <option>Before care only</option>
+            <option>After care only</option>
+          </select>
+        </div>
+        <div class="full"><label for="days">Preferred days (if part-time)</label><input id="days" name="days" placeholder="e.g., Mon, Wed, Fri"></div>
+        <div><label for="dropoff">Earliest drop-off</label><input id="dropoff" name="dropoff" type="time"></div>
+        <div><label for="pickup">Latest pick-up</label><input id="pickup" name="pickup" type="time"></div>
+
+        <div class="full"><label for="notes">Allergies / medical notes / anything else we should know?</label><textarea id="notes" name="notes"></textarea></div>
+
+        <div class="full row">
+          <input id="consent" name="consent" type="checkbox" required>
+          <label for="consent" style="margin:0;">I confirm the information provided is accurate and consent to be contacted.</label>
+        </div>
+
+        <div id="status" class="status" aria-live="polite"></div>
+        <button id="submitBtn" type="submit">Submit request</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // === SET THIS TO YOUR APPS SCRIPT WEB APP URL ===
+    const SCRIPT_URL = "https://SCRIPT-WEB-APP-URL-HERE";
+
+    const form = document.getElementById('reqForm');
+    const statusBox = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showStatus(msg, ok=true){
+      statusBox.className = 'status ' + (ok ? 'ok' : 'err');
+      statusBox.textContent = msg;
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+
+      // Honeypot check
+      if (document.getElementById('hp').value) {
+        showStatus('Submission blocked.', false);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      showStatus('Submitting…');
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.consent = !!document.getElementById('consent').checked;
+      data._meta = { submittedAt: new Date().toISOString(), page: location.href };
+
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json().catch(()=>({success:false}));
+        if (res.ok && json.success) {
+          showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
+          form.reset();
+        } else {
+          showStatus("Submission failed. Please try again later.", false);
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus("Network error. Please try again later.", false);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
