@@ -58,7 +58,7 @@
 
         <div class="full"><strong>Program Needs</strong></div>
         <div><label for="startDate">Preferred start date *</label><input id="startDate" name="startDate" type="date" required></div>
-        <div class="full"><label for="days">Preferred days (if part-time)</label><input id="days" name="days" placeholder="e.g., Mon, Wed, Fri"></div>
+        <!-- Removed schedule + preferred days -->
 
         <div class="full"><label for="notes">Allergies / medical notes / anything else we should know?</label><textarea id="notes" name="notes"></textarea></div>
 
@@ -74,7 +74,6 @@
   </div>
 
   <script>
-    // Your deployed Apps Script Web App URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXxlAaSdUikV3C3zcYzPDDzIu8hJVX9vRLaXNrYvd6QZU94rMBufTy0M5J9BLR-U30w/exec";
 
     const form = document.getElementById('reqForm');
@@ -88,7 +87,6 @@
 
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
-
       if (!form.reportValidity()) return;
 
       // Honeypot check
@@ -99,19 +97,16 @@
       showStatus('Submitting…');
 
       try {
-        // Use FormData to avoid CORS preflight
         const fd = new FormData(form);
         fd.set('consent', document.getElementById('consent').checked ? 'Yes' : 'No');
         fd.append('_meta', JSON.stringify({ submittedAt: new Date().toISOString(), page: location.href }));
 
-        // Try normal fetch first
         let res = await fetch(SCRIPT_URL, { method: 'POST', body: fd });
         if (!res.ok) throw new Error('Bad status');
 
         showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
         form.reset();
       } catch (err) {
-        // Fallback to no-cors: sends the request even if we can't read the response
         await fetch(SCRIPT_URL, { method: 'POST', body: new FormData(form), mode: 'no-cors' });
         showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
         form.reset();
