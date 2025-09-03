@@ -86,57 +86,54 @@
     </div>
   </div>
 
-  <script>
-    // Your deployed Apps Script Web App URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXxlAaSdUikV3C3zcYzPDDzIu8hJVX9vRLaXNrYvd6QZU94rMBufTy0M5J9BLR-U30w/exec";
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXxlAaSdUikV3C3zcYzPDDzIu8hJVX9vRLaXNrYvd6QZU94rMBufTy0M5J9BLR-U30w/exec";
 
-    const form = document.getElementById('reqForm');
-    const statusBox = document.getElementById('status');
-    const submitBtn = document.getElementById('submitBtn');
+  const form = document.getElementById('reqForm');
+  const statusBox = document.getElementById('status');
+  const submitBtn = document.getElementById('submitBtn');
 
-    function showStatus(msg, ok=true){
-      statusBox.className = 'status ' + (ok ? 'ok' : 'err');
-      statusBox.textContent = msg;
+  function showStatus(msg, ok=true){
+    statusBox.className = 'status ' + (ok ? 'ok' : 'err');
+    statusBox.textContent = msg;
+  }
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+
+    // Honeypot
+    const hp = document.getElementById('hp');
+    if (hp && hp.value) { showStatus('Submission blocked.', false); return; }
+
+    submitBtn.disabled = true;
+    showStatus('Submitting…');
+
+    try {
+      // Build FormData (no Content-Type header!)
+      const fd = new FormData(form);
+      fd.set('consent', document.getElementById('consent').checked ? 'Yes' : 'No');
+      fd.append('_meta', JSON.stringify({ submittedAt: new Date().toISOString(), page: location.href }));
+
+      // Simple POST = no preflight
+      const res = await fetch(SCRIPT_URL, { method: 'POST', body: fd });
+
+      // Don’t parse JSON (CORS might block reading); success if fetch resolves
+      if (res && (res.ok || res.type === 'opaque')) {
+        showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
+        form.reset();
+      } else {
+        showStatus("Submission failed. Please try again later.", false);
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus("Network error. Please try again later.", false);
+    } finally {
+      submitBtn.disabled = false;
     }
+  });
+</script>
 
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      if (!form.reportValidity()) return;
-
-      // Honeypot check
-      if (document.getElementById('hp').value) {
-        showStatus('Submission blocked.', false);
-        return;
-      }
-
-      submitBtn.disabled = true;
-      showStatus('Submitting…');
-
-      const data = Object.fromEntries(new FormData(form).entries());
-      data.consent = !!document.getElementById('consent').checked;
-      data._meta = { submittedAt: new Date().toISOString(), page: location.href };
-
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        const json = await res.json().catch(()=>({success:false}));
-        if (res.ok && json.success) {
-          showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
-          form.reset();
-        } else {
-          showStatus("Submission failed. Please try again later.", false);
-        }
-      } catch (err) {
-        console.error(err);
-        showStatus("Network error. Please try again later.", false);
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
-  </script>
 </body>
 </html>
 
