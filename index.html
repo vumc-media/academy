@@ -25,7 +25,6 @@
     .ok  { display:block; background:#e7f7ed; color:#0b5; }
     .err { display:block; background:#fdeaea; color:#b00; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-    small.note { grid-column:1/-1; color:#666; margin-top:-6px; }
   </style>
 </head>
 <body>
@@ -59,28 +58,7 @@
 
         <div class="full"><strong>Program Needs</strong></div>
         <div><label for="startDate">Preferred start date *</label><input id="startDate" name="startDate" type="date" required></div>
-        <div>
-          <label for="schedule">Schedule needed *</label>
-          <select id="schedule" name="schedule" required>
-            <option value="">Select…</option>
-            <option>Full-time (Mon–Fri)</option>
-            <option>Part-time (3 days)</option>
-            <option>Part-time (2 days)</option>
-            <option>Before care only</option>
-            <option>After care only</option>
-          </select>
-        </div>
         <div class="full"><label for="days">Preferred days (if part-time)</label><input id="days" name="days" placeholder="e.g., Mon, Wed, Fri"></div>
-
-        <div>
-          <label for="dropoff">Earliest drop-off</label>
-          <input id="dropoff" name="dropoff" type="time" min="07:30" max="17:00" step="300">
-        </div>
-        <div>
-          <label for="pickup">Latest pick-up</label>
-          <input id="pickup" name="pickup" type="time" min="07:30" max="17:00" step="300">
-        </div>
-        <small class="note">Care hours are 7:30 AM – 5:00 PM.</small>
 
         <div class="full"><label for="notes">Allergies / medical notes / anything else we should know?</label><textarea id="notes" name="notes"></textarea></div>
 
@@ -108,18 +86,9 @@
       statusBox.textContent = msg;
     }
 
-    // validate time window
-    function inWindow(t){ if(!t) return true; return t >= "07:30" && t <= "17:00"; }
-
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
 
-      // client-side validation (including time window)
-      const d = document.getElementById('dropoff');
-      const p = document.getElementById('pickup');
-      d.setCustomValidity(""); p.setCustomValidity("");
-      if (!inWindow(d.value)) d.setCustomValidity("Earliest drop-off is 7:30 AM.");
-      if (!inWindow(p.value)) p.setCustomValidity("Latest pick-up is 5:00 PM.");
       if (!form.reportValidity()) return;
 
       // Honeypot check
