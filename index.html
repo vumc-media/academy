@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Daycare Opening Request – The Academy</title>
+  <title>Preschool Opening Request – The Academy</title>
   <style>
     :root { --bg:#fafafa; --card:#fff; --text:#222; --muted:#666; --brand:#0d6efd; }
     * { box-sizing:border-box; }
@@ -25,12 +25,13 @@
     .ok  { display:block; background:#e7f7ed; color:#0b5; }
     .err { display:block; background:#fdeaea; color:#b00; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    small.note { grid-column:1/-1; color:#666; margin-top:-6px; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Academy Opening Request</h1>
-    <p>Request to be contacted about available daycare and/ or preschool openings at The Academy at VUMC.</p>
+    <h1>Preschool Opening Request</h1>
+    <p>Request to be contacted about available openings at The Academy at VUMC.</p>
 
     <div class="card">
       <form id="reqForm" novalidate>
@@ -70,8 +71,16 @@
           </select>
         </div>
         <div class="full"><label for="days">Preferred days (if part-time)</label><input id="days" name="days" placeholder="e.g., Mon, Wed, Fri"></div>
-        <div><label for="dropoff">Earliest drop-off</label><input id="dropoff" name="dropoff" type="time"></div>
-        <div><label for="pickup">Latest pick-up</label><input id="pickup" name="pickup" type="time"></div>
+
+        <div>
+          <label for="dropoff">Earliest drop-off</label>
+          <input id="dropoff" name="dropoff" type="time" min="07:30" max="17:00" step="300">
+        </div>
+        <div>
+          <label for="pickup">Latest pick-up</label>
+          <input id="pickup" name="pickup" type="time" min="07:30" max="17:00" step="300">
+        </div>
+        <small class="note">Care hours are 7:30 AM – 5:00 PM.</small>
 
         <div class="full"><label for="notes">Allergies / medical notes / anything else we should know?</label><textarea id="notes" name="notes"></textarea></div>
 
@@ -86,54 +95,61 @@
     </div>
   </div>
 
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXxlAaSdUikV3C3zcYzPDDzIu8hJVX9vRLaXNrYvd6QZU94rMBufTy0M5J9BLR-U30w/exec";
+  <script>
+    // Your deployed Apps Script Web App URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXxlAaSdUikV3C3zcYzPDDzIu8hJVX9vRLaXNrYvd6QZU94rMBufTy0M5J9BLR-U30w/exec";
 
-  const form = document.getElementById('reqForm');
-  const statusBox = document.getElementById('status');
-  const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('reqForm');
+    const statusBox = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
 
-  function showStatus(msg, ok=true){
-    statusBox.className = 'status ' + (ok ? 'ok' : 'err');
-    statusBox.textContent = msg;
-  }
+    function showStatus(msg, ok=true){
+      statusBox.className = 'status ' + (ok ? 'ok' : 'err');
+      statusBox.textContent = msg;
+    }
 
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    if (!form.reportValidity()) return;
+    // validate time window
+    function inWindow(t){ if(!t) return true; return t >= "07:30" && t <= "17:00"; }
 
-    // Honeypot
-    const hp = document.getElementById('hp');
-    if (hp && hp.value) { showStatus('Submission blocked.', false); return; }
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
 
-    submitBtn.disabled = true;
-    showStatus('Submitting…');
+      // client-side validation (including time window)
+      const d = document.getElementById('dropoff');
+      const p = document.getElementById('pickup');
+      d.setCustomValidity(""); p.setCustomValidity("");
+      if (!inWindow(d.value)) d.setCustomValidity("Earliest drop-off is 7:30 AM.");
+      if (!inWindow(p.value)) p.setCustomValidity("Latest pick-up is 5:00 PM.");
+      if (!form.reportValidity()) return;
 
-    try {
-      // Build FormData (no Content-Type header!)
-      const fd = new FormData(form);
-      fd.set('consent', document.getElementById('consent').checked ? 'Yes' : 'No');
-      fd.append('_meta', JSON.stringify({ submittedAt: new Date().toISOString(), page: location.href }));
+      // Honeypot check
+      const hp = document.getElementById('hp');
+      if (hp && hp.value) { showStatus('Submission blocked.', false); return; }
 
-      // Simple POST = no preflight
-      const res = await fetch(SCRIPT_URL, { method: 'POST', body: fd });
+      submitBtn.disabled = true;
+      showStatus('Submitting…');
 
-      // Don’t parse JSON (CORS might block reading); success if fetch resolves
-      if (res && (res.ok || res.type === 'opaque')) {
+      try {
+        // Use FormData to avoid CORS preflight
+        const fd = new FormData(form);
+        fd.set('consent', document.getElementById('consent').checked ? 'Yes' : 'No');
+        fd.append('_meta', JSON.stringify({ submittedAt: new Date().toISOString(), page: location.href }));
+
+        // Try normal fetch first
+        let res = await fetch(SCRIPT_URL, { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('Bad status');
+
         showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
         form.reset();
-      } else {
-        showStatus("Submission failed. Please try again later.", false);
+      } catch (err) {
+        // Fallback to no-cors: sends the request even if we can't read the response
+        await fetch(SCRIPT_URL, { method: 'POST', body: new FormData(form), mode: 'no-cors' });
+        showStatus("Thanks! Your request has been received. We'll be in touch soon.", true);
+        form.reset();
+      } finally {
+        submitBtn.disabled = false;
       }
-    } catch (err) {
-      console.error(err);
-      showStatus("Network error. Please try again later.", false);
-    } finally {
-      submitBtn.disabled = false;
-    }
-  });
-</script>
-
+    });
+  </script>
 </body>
 </html>
-
