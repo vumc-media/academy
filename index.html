@@ -14,7 +14,7 @@
     .card { background:var(--card); border:1px solid #eee; border-radius:12px; padding:16px; }
     form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .full { grid-column:1/-1; }
-    label { display:block; font-weight:600; font-size:.9rem; margin:4px 0; }
+    label { display:block; font-weight:600; font-size:.95rem; margin:4px 0; }
     input, select, textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:10px; font:inherit; background:#fff; }
     textarea { min-height:90px; resize:vertical; }
     .row { display:flex; align-items:center; gap:8px; }
@@ -29,8 +29,8 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>Daycare Opening Request</h1>
-    <p>Request to be contacted about available daycare openings at The Academy at VUMC.</p>
+    <h1>Academy Opening Request</h1>
+    <p>Request to be contacted about available daycare and/ or preschool openings at The Academy at VUMC.</p>
 
     <div class="card">
       <form id="reqForm" novalidate>
@@ -87,8 +87,8 @@
   </div>
 
   <script>
-    // === SET THIS TO YOUR APPS SCRIPT WEB APP URL ===
-    const SCRIPT_URL = "https://SCRIPT-WEB-APP-URL-HERE";
+    // Your deployed Apps Script Web App URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBXxlAaSdUikV3C3zcYzPDDzIu8hJVX9vRLaXNrYvd6QZU94rMBufTy0M5J9BLR-U30w/exec";
 
     const form = document.getElementById('reqForm');
     const statusBox = document.getElementById('status');
@@ -139,3 +139,4 @@
   </script>
 </body>
 </html>
+
