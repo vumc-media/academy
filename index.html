@@ -34,7 +34,7 @@
 
     <div class="card">
       <form id="reqForm" novalidate>
-        <!-- Honeypot (spam trap) -->
+        <!-- Honeypot -->
         <label class="sr-only" for="hp">Leave blank</label>
         <input id="hp" name="hp" class="sr-only" tabindex="-1" autocomplete="off" />
 
@@ -43,7 +43,6 @@
         <div><label for="pgLast">Last name *</label><input id="pgLast" name="pgLast" required></div>
         <div><label for="email">Email *</label><input id="email" name="email" type="email" required></div>
         <div><label for="phone">Mobile phone *</label><input id="phone" name="phone" type="tel" required></div>
-        <div class="full"><label for="address">Home address</label><input id="address" name="address"></div>
 
         <div class="full"><strong>Child</strong></div>
         <div><label for="childFirst">First name *</label><input id="childFirst" name="childFirst" required></div>
@@ -58,7 +57,7 @@
 
         <div class="full"><strong>Program Needs</strong></div>
         <div><label for="startDate">Preferred start date *</label><input id="startDate" name="startDate" type="date" required></div>
-        <!-- Removed schedule + preferred days -->
+        <div class="full"><em>Schedule: Full-time (Mon–Fri)</em></div>
 
         <div class="full"><label for="notes">Allergies / medical notes / anything else we should know?</label><textarea id="notes" name="notes"></textarea></div>
 
@@ -89,7 +88,6 @@
       e.preventDefault();
       if (!form.reportValidity()) return;
 
-      // Honeypot check
       const hp = document.getElementById('hp');
       if (hp && hp.value) { showStatus('Submission blocked.', false); return; }
 
